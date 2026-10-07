@@ -88,6 +88,13 @@
   .toast { position:fixed; right:20px; bottom:44px; max-width:min(420px, calc(100vw - 40px)); padding:12px 16px; border-radius:8px; background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--accent); box-shadow:0 8px 24px rgba(0,0,0,.4); font-size:.9rem; opacity:0; transform:translateY(8px); transition:opacity .2s, transform .2s; pointer-events:none; }
   .toast.show { opacity:1; transform:none; }
   .toast.err { border-left-color:#e5484d; }
+  .links a { display:flex; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--line); color:var(--text); text-decoration:none; }
+  .links a:first-child { border-top:none; padding-top:0; }
+  .links a:hover b { color:var(--accent); }
+  .links span { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .links small { color:var(--muted); }
+  .links small.url { font-family:ui-monospace,monospace; font-size:.75rem; overflow-wrap:anywhere; }
+  .links a::after { content:'↗'; margin-left:auto; color:var(--accent); }
   button, input[type=range] { touch-action:manipulation; } /* no double-tap zoom on the d-pad */
   @media (max-width:520px) {
     nav { padding:0; gap:0; }
@@ -177,6 +184,10 @@
     <div class="card-head"><h2>Services</h2><span class="hint" id="svc-msg"></span></div>
     <div id="service-rows"></div>
   </div>
+  <div class="card">
+    <h2>Service web UIs</h2>
+    <div class="links" id="web-links"></div>
+  </div>
 </section>
 
 <section id="analytics" class="tab">
@@ -221,6 +232,7 @@ function saveSettings() {
   apiBase = $('api-base').value.trim().replace(/\/$/, '');
   if (apiBase) localStorage.setItem('apiBase', apiBase);
   else { localStorage.removeItem('apiBase'); apiBase = DEFAULT_API; $('api-base').value = apiBase; }
+  renderLinks();
   toast('Saved');
 }
 async function post(path, body) {
@@ -345,6 +357,25 @@ async function svc(name, action) {
   poll();
 }
 renderServices({});
+
+/* settings: links to each service's own web UI, on the rover's host */
+const WEB_UIS = [
+  ['Control API docs', 'Swagger UI for every /api endpoint', h => apiBase + '/api/docs/'],
+  ['Colour detection', 'colordetect status page and live feed', h => `http://${h}:9003/`],
+  ['Motion web control', 'camera settings', h => `http://${h}:9001/`],
+  ['Motion stream', 'raw MJPEG camera stream', h => `http://${h}:9002/`],
+  ['Supervisor', 'process manager (login required)', h => `http://${h}:9000/`],
+  ['Remote desktop', 'noVNC via websockify', h => `http://${h}:6080/vnc.html`],
+];
+function renderLinks() {
+  let host;
+  try { host = new URL(apiBase).hostname; } catch (e) { host = location.hostname || '10.42.0.97'; } // bad URL in Settings
+  $('web-links').innerHTML = WEB_UIS.map(([name, desc, url]) => {
+    const u = url(host);
+    return `<a href="${u}" target="_blank" rel="noopener"><span><b>${name}</b><small>${desc}</small><small class="url">${u}</small></span></a>`;
+  }).join('');
+}
+renderLinks();
 
 async function poll() {
   try {

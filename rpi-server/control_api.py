@@ -69,6 +69,52 @@ class ErrorResponse(Schema):
     error = fields.Str()
 
 
+class SystemResponse(Schema):
+    cpu_percent = fields.Float()
+    cpu_temp_c = fields.Float(allow_none=True)
+    load_avg = fields.List(fields.Float())
+    memory = fields.Dict()
+    disk = fields.Dict()
+    wifi = fields.Dict()
+    uptime_s = fields.Float()
+
+
+@blp.route("/system", methods=["GET"])
+@blp.response(200, SystemResponse)
+@blp.doc(summary="CPU, RAM, disk, temperature, wifi signal, uptime")
+def system():
+    import time
+
+    import psutil
+
+    vm = psutil.virtual_memory()
+    du = psutil.disk_usage("/")
+    temp = None
+    rc, out, _ = run(["vcgencmd", "measure_temp"])
+    if rc == 0 and "temp=" in out:
+        try:
+            temp = float(out.split("temp=")[1].rstrip("'C"))
+        except ValueError:
+            pass
+    wifi = {}
+    rc, out, _ = run(["nmcli", "-t", "-f", "IN-USE,SSID,SIGNAL,BARS", "device", "wifi", "list"])
+    if rc == 0:
+        for line in out.splitlines():
+            parts = line.split(":")
+            if parts and parts[0] == "*" and len(parts) >= 4:
+                wifi = {"ssid": parts[1], "signal_percent": int(parts[2]), "bars": parts[3]}
+                break
+    return {
+        "cpu_percent": psutil.cpu_percent(interval=0.5),
+        "cpu_temp_c": temp,
+        "load_avg": list(psutil.getloadavg()),
+        "memory": {"total_mb": vm.total // 2**20, "used_mb": vm.used // 2**20, "percent": vm.percent},
+        "disk": {"total_gb": round(du.total / 2**30, 1), "used_gb": round(du.used / 2**30, 1), "percent": du.percent},
+        "wifi": wifi,
+        "uptime_s": round(time.time() - psutil.boot_time(), 1),
+    }
+
+
 @blp.route("/status", methods=["GET"])
 @blp.response(200, StatusResponse)
 @blp.doc(summary="Supervisor program states and active wifi connections")

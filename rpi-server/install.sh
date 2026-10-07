@@ -10,7 +10,7 @@ SUDO=""
 
 echo "==> Installing system packages"
 $SUDO apt-get update
-$SUDO apt-get install -y supervisor nginx motion curl
+$SUDO apt-get install -y supervisor nginx motion curl glances
 
 if ! command -v uv >/dev/null 2>&1; then
   echo "==> Installing uv"

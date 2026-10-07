@@ -76,6 +76,7 @@ supervisor like the other programs.
 | `/api/colordetect/snapshot` | GET | latest JPEG frame |
 | `/api/colordetect/video_feed` | GET | MJPEG stream |
 | `/api/pico/command` | POST | `{cmd, timeout}` to the Pico over serial |
+| `/api/system` | GET | CPU, RAM, disk, temp, wifi signal, uptime |
 | `/api/wifi/status` | GET | nmcli device states |
 
 Example: `curl -X POST http://10.42.0.97:8000/api/pico/command -d '{"cmd":"PING"}' -H 'Content-Type: application/json'`

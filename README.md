@@ -51,11 +51,6 @@ systemctl status nginx supervisor
 
 Ad-hoc start of motion: `sudo supervisorctl start motion`.
 
-## Pico UART test
-
-See `~/Workspace/uart-test/` on the Pi (`pico_main.py`, `uart_test.py`,
-README). Wiring: Pi GPIO14/GPIO15 cross to Pico GPIO1/GPIO0, common GND,
-115200 baud.
 
 ## Teardown
 

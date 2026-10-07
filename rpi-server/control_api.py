@@ -7,6 +7,7 @@ from flask_smorest import Api, Blueprint
 from marshmallow import Schema, fields
 
 COLORDETECT = "http://localhost:9003"
+MOTION_STREAM = "http://localhost:9002"
 PICOCOMS = "http://localhost:8080"
 PORT = 8000
 
@@ -175,6 +176,30 @@ def colordetect_motion(action):
         return jsonify({"error": "unknown action"}), 400
     content, code, ctype = proxy_json(f"{COLORDETECT}{path}", "POST", {}, timeout=30)
     return Response(content, status=code, mimetype=ctype)
+
+
+@blp.route("/colordetect/detect/<string:action>", methods=["POST"])
+@blp.doc(summary="Turn colour detection on/off without touching the camera. action: enable|disable")
+def colordetect_detect(action):
+    if action not in ("enable", "disable"):
+        return jsonify({"error": "unknown action"}), 400
+    content, code, ctype = proxy_json(f"{COLORDETECT}/detect/{action}", "POST", {})
+    return Response(content, status=code, mimetype=ctype)
+
+
+@blp.route("/camera/stream", methods=["GET"])
+@blp.doc(summary="Raw MJPEG camera stream from motion (no detection overlay)")
+def camera_stream():
+    try:
+        r = requests.get(MOTION_STREAM, stream=True, timeout=10)
+    except requests.RequestException as e:
+        return jsonify({"error": str(e)}), 502
+
+    def generate():
+        with r:
+            yield from r.iter_content(chunk_size=4096)
+
+    return Response(generate(), content_type=r.headers.get("Content-Type"))
 
 
 @blp.route("/colordetect/snapshot", methods=["GET"])

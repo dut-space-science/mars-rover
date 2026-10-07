@@ -39,7 +39,7 @@ def run_cmd(cmd):
         return 1, "", str(e)
 
 def motion_status():
-    rc, out, err = run_cmd(["sudo", "supervisorctl", "status", "motion"])
+    rc, out, err = run_cmd(["sudo", "-n", "supervisorctl", "status", "motion"])
     if "RUNNING" in out:
         return "running"
     if "STOPPED" in out:
@@ -47,12 +47,12 @@ def motion_status():
     return out.strip() or err.strip() or "unknown"
 
 def motion_start():
-    rc, out, err = run_cmd(["sudo", "supervisorctl", "start", "motion"])
+    rc, out, err = run_cmd(["sudo", "-n", "supervisorctl", "start", "motion"])
     log(f"motion start rc={rc} out={out} err={err}")
     return rc == 0, out or err
 
 def motion_stop():
-    rc, out, err = run_cmd(["sudo", "supervisorctl", "stop", "motion"])
+    rc, out, err = run_cmd(["sudo", "-n", "supervisorctl", "stop", "motion"])
     log(f"motion stop rc={rc} out={out} err={err}")
     return rc == 0, out or err
 
@@ -265,6 +265,16 @@ curl http://localhost:9003/video_feed | ffplay -
             ok, msg = motion_stop()
             self._reply({"ok": ok, "msg": msg, "motion": motion_status(), "processing": False})
             return
+        if self.path in ("/detect/enable", "/detect/disable"):
+            enable = self.path.endswith("enable")
+            if enable and motion_status() != "running":
+                self._reply({"ok": False, "error": "camera (motion) is not running", "processing": processing}, 409)
+                return
+            with proc_lock:
+                processing = enable
+            log(f"processing {'enabled' if enable else 'disabled'}")
+            self._reply({"ok": True, "processing": processing})
+            return
         if self.path == "/motion/toggle":
             st = motion_status()
             if st == "running":
@@ -291,6 +301,8 @@ curl http://localhost:9003/video_feed | ffplay -
                         config["min_area"] = int(body["min_area"])
                     if "jpeg_quality" in body:
                         config["jpeg_quality"] = int(body["jpeg_quality"])
+                    if "resize_width" in body:
+                        config["resize_width"] = int(body["resize_width"])
                     snapshot = dict(config)
                 self._reply(snapshot)
             except Exception as e:

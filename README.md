@@ -12,7 +12,7 @@ rpi-server/            Everything that runs on the Pi
   supervisord.conf     /etc/supervisor/supervisord.conf
   colordetect.py/.conf Colour detection on the motion stream, HTTP :9003
   picocoms.py/.conf    Pico serial bridge over HTTP, :8080
-  netconman.py/.conf   Keeps the Pi on the honorX5b WiFi network
+  netconman.py/.conf   Keeps the Pi on the iotwap WiFi network
   motion.cfg/.conf     motion daemon (webcontrol :9001, stream :9002)
   websockify.conf      noVNC -> VNC bridge, :6080 -> localhost:5900
   nginx/               Stock-equivalent nginx.conf + default site

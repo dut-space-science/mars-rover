@@ -5,23 +5,45 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mars Rover Control Center</title>
 <style>
-  :root { --bg:#0f1419; --panel:#1a2230; --accent:#e8710a; --text:#e6edf3; --muted:#8b98a9; }
+  /* DUT / Space Science & CNS Research Centre palette */
+  :root { --night:#0c1320; --panel:#121d2b; --line:#1f3b30; --accent:#1f9a4b; --accent-dk:#146b34; --forest:#0b3d22; --cream:#f3ece1; --text:#f4f6f5; --muted:#9db3a8; }
   * { box-sizing:border-box; margin:0; font-family:system-ui,sans-serif; }
-  body { background:var(--bg); color:var(--text); }
-  nav { display:flex; gap:4px; background:var(--panel); padding:0 20px; }
-  nav button { background:none; border:none; color:var(--muted); padding:12px 18px; cursor:pointer; border-bottom:3px solid transparent; font-size:.95rem; }
+  body { min-height:100vh; background:linear-gradient(180deg, var(--night) 0%, var(--night) 45%, var(--forest) 100%) fixed; color:var(--text); display:flex; flex-direction:column; }
+  body::after { content:''; position:fixed; left:0; right:0; bottom:0; height:28px; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='168' height='28'%3E%3Cpath fill='%231f9a4b' d='M0 0V28H28Z'/%3E%3Cpath fill='%23146b34' d='M0 0H28V28Z'/%3E%3Cpath fill='%230b3d22' d='M28 0H56L28 28Z'/%3E%3Cpath fill='%23f3ece1' d='M56 0V28H28Z'/%3E%3Cpath fill='%23146b34' d='M56 0V28H84Z'/%3E%3Cpath fill='%231f9a4b' d='M56 0H84V28Z'/%3E%3Cpath fill='%23111' d='M84 0H112L84 28Z'/%3E%3Cpath fill='%230b3d22' d='M112 0V28H84Z'/%3E%3Cpath fill='%231f9a4b' d='M112 0V28H140Z'/%3E%3Cpath fill='%23f3ece1' d='M112 0H140V28Z'/%3E%3Cpath fill='%23146b34' d='M140 0H168L140 28Z'/%3E%3Cpath fill='%231f9a4b' d='M168 0V28H140Z'/%3E%3C/svg%3E") repeat-x; }
+  nav { display:flex; gap:4px; background:rgba(12,19,32,.9); border-bottom:1px solid var(--line); padding:0 20px; }
+  nav button { background:none; border:none; color:var(--muted); padding:12px 18px; cursor:pointer; border-bottom:3px solid transparent; font-size:.95rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  nav button:hover { color:var(--text); }
   nav button.active { color:var(--text); border-bottom-color:var(--accent); }
-  main { padding:20px; max-width:900px; margin:0 auto; }
+  main { flex:1; display:flex; flex-direction:column; width:100%; padding:20px 20px 56px; max-width:900px; margin:0 auto; }
   .tab { display:none; } .tab.active { display:block; }
-  .card { background:var(--panel); border-radius:10px; padding:18px; margin-bottom:16px; }
-  .card h2 { font-size:1rem; margin-bottom:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  body:has(#controls.active) { height:100vh; } /* definite height so the d-pad's cqh resolves */
+  #controls.active { flex:1; display:flex; flex-direction:column; }
+  .card.drive { flex:1; display:flex; flex-direction:column; }
+  .dpad-wrap { flex:1; min-height:240px; max-height:520px; margin-block:auto; container-type:size; display:grid; place-items:center; }
+  .dpad { width:min(100cqw,100cqh); height:min(100cqw,100cqh); display:grid; gap:min(12px,2.5cqmin); grid-template:repeat(3,1fr)/repeat(3,1fr); grid-template-areas:". up ." "left stop right" ". down ."; }
+  .pad { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; background:var(--night); border:1px solid var(--accent-dk); border-radius:14px; color:var(--text); cursor:pointer; font-size:max(12px,3.2cqmin); font-weight:600; text-transform:uppercase; letter-spacing:.05em; transition:background .12s, transform .08s; }
+  .pad svg { width:9cqmin; height:9cqmin; fill:var(--accent); }
+  .pad:hover { background:var(--accent-dk); border-color:var(--accent); }
+  .pad:hover svg { fill:var(--cream); }
+  .pad:active { background:var(--accent); transform:scale(.96); }
+  .pad.up { grid-area:up; } .pad.down { grid-area:down; } .pad.left { grid-area:left; } .pad.right { grid-area:right; }
+  .pad.down svg { transform:rotate(180deg); } .pad.left svg { transform:rotate(-90deg); } .pad.right svg { transform:rotate(90deg); }
+  .pad.stop { grid-area:stop; border-color:#a3271f; }
+  .pad.stop svg { fill:#e5484d; }
+  .pad.stop:hover { background:#7a1f1a; border-color:#e5484d; }
+  .pad.stop:active { background:#a3271f; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px; margin-bottom:16px; }
+  .card h2 { font-size:1.05rem; font-weight:800; margin-bottom:12px; color:var(--cream); text-transform:uppercase; letter-spacing:.06em; }
   label { display:block; margin:10px 0 4px; color:var(--muted); font-size:.85rem; }
-  input, select { width:100%; padding:9px 12px; border-radius:6px; border:1px solid #2c3a4d; background:var(--bg); color:var(--text); }
-  button.primary { background:var(--accent); color:#fff; border:none; border-radius:6px; padding:10px 18px; cursor:pointer; margin-top:12px; }
-  button.ghost { background:none; border:1px solid #2c3a4d; color:var(--text); border-radius:6px; padding:8px 14px; cursor:pointer; margin:4px 4px 0 0; }
+  input, select { width:100%; padding:9px 12px; border-radius:6px; border:1px solid var(--line); background:var(--night); color:var(--text); accent-color:var(--accent); }
+  input:focus, select:focus { outline:none; border-color:var(--accent); }
+  button.primary { background:var(--accent); color:#fff; border:none; border-radius:6px; padding:10px 18px; cursor:pointer; margin-top:12px; font-weight:600; }
+  button.primary:hover { background:var(--accent-dk); }
+  button.ghost { background:none; border:1px solid var(--accent-dk); color:var(--text); border-radius:6px; padding:8px 14px; cursor:pointer; margin:4px 4px 0 0; }
+  button.ghost:hover { background:var(--accent-dk); border-color:var(--accent); }
   .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; }
-  .stat { background:var(--bg); border-radius:8px; padding:14px; }
-  .stat .v { font-size:1.5rem; font-weight:700; }
+  .stat { background:var(--night); border:1px solid var(--line); border-radius:8px; padding:14px; }
+  .stat .v { font-size:1.5rem; font-weight:700; color:var(--accent); }
   .stat .k { color:var(--muted); font-size:.8rem; margin-top:4px; }
 </style>
 </head>
@@ -40,15 +62,15 @@
     <input id="speed" type="range" min="0" max="100" value="50" oninput="document.getElementById('speed-v').textContent=this.value+'%'">
     <p style="text-align:center"><b id="speed-v">50%</b></p>
   </div>
-  <div class="card">
+  <div class="card drive">
     <h2>Drive</h2>
-    <div style="text-align:center;line-height:2.2">
-      <button class="ghost" onclick="drive('FORWARD')">Forward</button><br>
-      <button class="ghost" onclick="drive('LEFT')">Left</button>
-      <button class="ghost" onclick="drive('STOP')">Stop</button>
-      <button class="ghost" onclick="drive('RIGHT')">Right</button><br>
-      <button class="ghost" onclick="drive('BACKWARD')">Backward</button>
-    </div>
+    <div class="dpad-wrap"><div class="dpad">
+      <button class="pad up" onclick="drive('FORWARD')"><svg viewBox="0 0 24 24"><path d="M12 4l9 12H3z"/></svg>Forward</button>
+      <button class="pad left" onclick="drive('LEFT')"><svg viewBox="0 0 24 24"><path d="M12 4l9 12H3z"/></svg>Left</button>
+      <button class="pad stop" onclick="drive('STOP')"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>Stop</button>
+      <button class="pad right" onclick="drive('RIGHT')"><svg viewBox="0 0 24 24"><path d="M12 4l9 12H3z"/></svg>Right</button>
+      <button class="pad down" onclick="drive('BACKWARD')"><svg viewBox="0 0 24 24"><path d="M12 4l9 12H3z"/></svg>Backward</button>
+    </div></div>
   </div>
 </section>
 
@@ -155,7 +177,7 @@ async function pollAnalytics() {
     $('a-wifi').textContent = s.wifi ? s.wifi.signal_percent : '–';
     $('a-up').textContent = Math.round(s.uptime_s/60) + 'm';
     const st = await get('/api/status');
-    $('a-programs').textContent = Object.entries(st.programs).map(([k,v]) => k + ': ' + v).join('\n');
+    $('a-programs').textContent = st.error ? 'supervisorctl failed: ' + st.error : Object.entries(st.programs).map(([k,v]) => k + ': ' + v).join('\n');
     setStatus('connected');
   } catch (e) { setStatus('disconnected'); }
 }

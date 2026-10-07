@@ -18,6 +18,8 @@ $SUDO rm -f /etc/supervisor/conf.d/colordetect.conf \
            /etc/supervisor/conf.d/motion.conf \
            /etc/supervisor/conf.d/websockify.conf
 
+$SUDO rm -f /etc/sudoers.d/rover-supervisorctl
+
 echo "==> Removing nginx site"
 $SUDO rm -f /etc/nginx/sites-enabled/default /etc/nginx/sites-available/default
 $SUDO rm -f /var/www/html/index.html

@@ -34,6 +34,15 @@ for conf in colordetect netconman picocoms motion websockify control-api; do
       "$PROJECT_DIR/$conf.conf" | $SUDO tee "/etc/supervisor/conf.d/$conf.conf" >/dev/null
 done
 
+# control-api and colordetect run as 'space' and call `sudo -n supervisorctl`;
+# allow exactly that command without a password.
+echo "==> Allowing 'space' to run supervisorctl without a password"
+SUDOERS_TMP="$(mktemp)"
+echo "space ALL=(root) NOPASSWD: $(command -v supervisorctl)" > "$SUDOERS_TMP"
+$SUDO visudo -cf "$SUDOERS_TMP"
+$SUDO install -m 440 -o root -g root "$SUDOERS_TMP" /etc/sudoers.d/rover-supervisorctl
+rm -f "$SUDOERS_TMP"
+
 echo "==> Installing nginx config"
 $SUDO cp "$PROJECT_DIR/nginx/nginx.conf" /etc/nginx/nginx.conf
 $SUDO cp "$PROJECT_DIR/nginx/default" /etc/nginx/sites-available/default

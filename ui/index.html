@@ -8,8 +8,6 @@
   :root { --bg:#0f1419; --panel:#1a2230; --accent:#e8710a; --text:#e6edf3; --muted:#8b98a9; }
   * { box-sizing:border-box; margin:0; font-family:system-ui,sans-serif; }
   body { background:var(--bg); color:var(--text); }
-  header { background:var(--panel); padding:14px 20px; display:flex; justify-content:space-between; align-items:center; }
-  header h1 { font-size:1.1rem; }
   nav { display:flex; gap:4px; background:var(--panel); padding:0 20px; }
   nav button { background:none; border:none; color:var(--muted); padding:12px 18px; cursor:pointer; border-bottom:3px solid transparent; font-size:.95rem; }
   nav button.active { color:var(--text); border-bottom-color:var(--accent); }
@@ -27,16 +25,12 @@
   .stat { background:var(--bg); border-radius:8px; padding:14px; }
   .stat .v { font-size:1.5rem; font-weight:700; }
   .stat .k { color:var(--muted); font-size:.8rem; margin-top:4px; }
-  #status-bar { font-family:monospace; font-size:.8rem; color:var(--muted); }
 </style>
 </head>
 <body>
-<header>
-  <h1>Mars Rover</h1>
-  <span id="status-bar">disconnected</span>
-</header>
 <nav>
   <button class="active" data-tab="controls">Controls</button>
+  <button data-tab="camera">Camera</button>
   <button data-tab="settings">Settings</button>
   <button data-tab="analytics">Analytics</button>
 </nav>
@@ -54,6 +48,9 @@
     <p style="text-align:center"><b id="speed-v">50%</b></p>
     <button class="primary" onclick="sendDrive()">Send drive command</button>
   </div>
+</section>
+
+<section id="camera" class="tab">
   <div class="card">
     <h2>Camera</h2>
     <button class="ghost" onclick="post('/api/colordetect/motion/enable')">Start motion + detect</button>
@@ -117,7 +114,7 @@ function saveSettings() {
   localStorage.setItem('apiBase', apiBase);
   setStatus('saved');
 }
-function setStatus(s) { $('status-bar').textContent = s; }
+function setStatus(s) { console.log(s); }
 async function post(path, body) {
   try {
     const r = await fetch(apiBase + path, {method:'POST', headers:{'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : '{}'});

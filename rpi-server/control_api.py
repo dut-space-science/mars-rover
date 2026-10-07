@@ -49,6 +49,7 @@ def proxy_json(url, method="GET", body=None, timeout=10):
 class StatusResponse(Schema):
     programs = fields.Dict(keys=fields.Str(), values=fields.Str())
     active_connections = fields.List(fields.Str())
+    error = fields.Str(allow_none=True)
 
 
 class ServiceActionResponse(Schema):
@@ -119,14 +120,14 @@ def system():
 @blp.response(200, StatusResponse)
 @blp.doc(summary="Supervisor program states and active wifi connections")
 def status():
-    _, out, _ = run(["sudo", "supervisorctl", "status"])
+    _, out, err = run(["sudo", "-n", "supervisorctl", "status"])
     programs = {}
     for line in out.splitlines():
         parts = line.split(None, 1)
         if len(parts) == 2:
             programs[parts[0]] = parts[1].strip()
     _, wifi_ssid, _ = run(["nmcli", "-t", "-f", "NAME", "con", "show", "--active"])
-    return {"programs": programs, "active_connections": wifi_ssid.splitlines()}
+    return {"programs": programs, "active_connections": wifi_ssid.splitlines(), "error": None if programs else (err or out or "no output from supervisorctl")}
 
 
 @blp.route("/services/<string:name>/<string:action>", methods=["POST"])
@@ -135,7 +136,7 @@ def status():
 def service_action(name, action):
     if name not in SERVICES or action not in ACTIONS:
         return jsonify({"error": "unknown service or action"}), 400
-    rc, out, err = run(["sudo", "supervisorctl", action, name], timeout=30)
+    rc, out, err = run(["sudo", "-n", "supervisorctl", action, name], timeout=30)
     return {"ok": rc == 0, "output": out or err}, 200 if rc == 0 else 500
 
 

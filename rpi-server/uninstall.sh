@@ -12,11 +12,9 @@ $SUDO systemctl stop supervisor || true
 $SUDO systemctl disable supervisor || true
 
 echo "==> Removing supervisor config"
-$SUDO rm -f /etc/supervisor/conf.d/colordetect.conf \
-           /etc/supervisor/conf.d/netconman.conf \
-           /etc/supervisor/conf.d/picocoms.conf \
-           /etc/supervisor/conf.d/motion.conf \
-           /etc/supervisor/conf.d/websockify.conf
+for conf in colordetect netconman picocoms motion websockify control-api; do  # same list as install.sh
+  $SUDO rm -f "/etc/supervisor/conf.d/$conf.conf"
+done
 
 $SUDO rm -f /etc/sudoers.d/rover-supervisorctl
 

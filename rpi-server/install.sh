@@ -12,10 +12,11 @@ echo "==> Installing system packages"
 $SUDO apt-get update
 $SUDO apt-get install -y supervisor nginx motion curl glances
 
+# uv's installer puts it in ~/.local/bin, which non-login shells (e.g. ssh host cmd) don't have on PATH
+export PATH="$HOME/.local/bin:$PATH"
 if ! command -v uv >/dev/null 2>&1; then
   echo "==> Installing uv"
   curl -LsSf https://astral.sh/uv/install.sh | sh
-  export PATH="$HOME/.local/bin:$PATH"
 fi
 
 echo "==> Syncing Python dependencies with uv"

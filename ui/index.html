@@ -260,15 +260,29 @@ function renderCamera() {
   const img = $('cam-feed');
   if (img.dataset.src !== src) {
     img.dataset.src = src;
+    cam.feedErr = '';
     if (src) img.src = src + '?t=' + Date.now(); else img.removeAttribute('src'); // drop the stream when hidden
   }
-  img.hidden = !live;
-  $('cam-empty').hidden = live;
-  $('cam-empty-msg').textContent = cam.msg || 'Camera is off';
+  if (img.naturalWidth) cam.feedErr = '';
+  const showFeed = live && !cam.feedErr;
+  img.hidden = !showFeed;
+  $('cam-empty').hidden = showFeed;
+  $('cam-empty-msg').textContent = (live && cam.feedErr) || cam.msg || 'Camera is off';
 }
-$('cam-feed').onerror = function () { // motion takes a moment to start streaming
-  setTimeout(() => { if (this.dataset.src) this.src = this.dataset.src + '?t=' + Date.now(); }, 1500);
+// An <img> can't read error bodies (Chrome blocks cross-origin JSON as ORB), so re-fetch to show why the feed failed.
+$('cam-feed').onerror = async function () {
+  const src = this.dataset.src;
+  if (!src) return;
+  const ctl = new AbortController();
+  try {
+    const r = await fetch(src, {signal: ctl.signal});
+    cam.feedErr = r.ok ? 'Waiting for video…' : 'No video: ' + ((await r.json().catch(() => ({}))).error || 'HTTP ' + r.status);
+  } catch (e) { cam.feedErr = 'No video: stream unreachable'; }
+  ctl.abort();
+  renderCamera();
+  setTimeout(() => { if (this.dataset.src === src) this.src = src + '?t=' + Date.now(); }, 2000); // motion may still be starting
 };
+$('cam-feed').onload = () => { cam.feedErr = ''; renderCamera(); };
 document.querySelectorAll('#cam-view button').forEach(b => b.onclick = () => { cam.view = b.dataset.view; renderCamera(); });
 async function setCamera(on) {
   $('cam-power').disabled = true;

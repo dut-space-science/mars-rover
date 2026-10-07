@@ -60,3 +60,22 @@ ssh -t space@raspberrypi 'cd ~/rpi-server && sudo bash uninstall.sh'
 
 Stops/disables supervisor, removes the conf.d programs and nginx default site.
 System packages remain; purge with `sudo apt-get purge supervisor nginx motion`.
+
+## Control API (`control_api.py`, port 8000)
+
+Flask + CORS wrapper for a web control center. `control-api` runs under
+supervisor like the other programs.
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/status` | GET | supervisor program states + active wifi connections |
+| `/api/services/<name>/<start\|stop\|restart>` | POST | manage supervisor programs |
+| `/api/colordetect/status` | GET | health/processing/motion state |
+| `/api/colordetect/config` | GET/POST | HSV thresholds, min_area, quality, resize |
+| `/api/colordetect/motion/<enable\|disable\|toggle>` | POST | camera + detection on/off |
+| `/api/colordetect/snapshot` | GET | latest JPEG frame |
+| `/api/colordetect/video_feed` | GET | MJPEG stream |
+| `/api/pico/command` | POST | `{cmd, timeout}` to the Pico over serial |
+| `/api/wifi/status` | GET | nmcli device states |
+
+Example: `curl -X POST http://10.42.0.97:8000/api/pico/command -d '{"cmd":"PING"}' -H 'Content-Type: application/json'`

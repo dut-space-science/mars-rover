@@ -27,7 +27,7 @@ VENV_PY="$PROJECT_DIR/.venv/bin/python"
 echo "==> Installing supervisor config"
 $SUDO cp "$PROJECT_DIR/supervisord.conf" /etc/supervisor/supervisord.conf
 $SUDO mkdir -p /etc/supervisor/conf.d
-for conf in colordetect netconman picocoms motion websockify; do
+for conf in colordetect netconman picocoms motion websockify control-api; do
   sed -e "s|/usr/bin/python3|$VENV_PY|" \
       -e "s|/home/space/.supervisor|$PROJECT_DIR|g" \
       -e "s|command=websockify|command=$PROJECT_DIR/.venv/bin/websockify|" \

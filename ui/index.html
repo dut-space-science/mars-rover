@@ -16,8 +16,8 @@
   nav button.active { color:var(--text); border-bottom-color:var(--accent); }
   main { flex:1; display:flex; flex-direction:column; width:100%; padding:20px 20px 56px; max-width:900px; margin:0 auto; }
   .tab { display:none; } .tab.active { display:block; }
-  body:has(#controls.active) { height:100vh; } /* definite height so the d-pad's cqh resolves */
-  #controls.active { flex:1; display:flex; flex-direction:column; }
+  body:has(.tab.fill.active) { height:100vh; } /* definite height so the d-pad's cqh resolves */
+  .tab.fill.active { flex:1; display:flex; flex-direction:column; }
   .card.drive { flex:1; display:flex; flex-direction:column; }
   .dpad-wrap { flex:1; min-height:240px; max-height:520px; margin-block:auto; container-type:size; display:grid; place-items:center; }
   .dpad { width:min(100cqw,100cqh); height:min(100cqw,100cqh); display:grid; gap:min(12px,2.5cqmin); grid-template:repeat(3,1fr)/repeat(3,1fr); grid-template-areas:". up ." "left stop right" ". down ."; }
@@ -45,6 +45,49 @@
   .stat { background:var(--night); border:1px solid var(--line); border-radius:8px; padding:14px; }
   .stat .v { font-size:1.5rem; font-weight:700; color:var(--accent); }
   .stat .k { color:var(--muted); font-size:.8rem; margin-top:4px; }
+  [hidden] { display:none !important; }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  .card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+  .card-head h2 { margin:0; }
+  .hint { color:var(--muted); font-size:.8rem; }
+  .chip { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; font-size:.72rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; background:var(--night); border:1px solid var(--line); color:var(--muted); }
+  .chip::before { content:''; width:7px; height:7px; border-radius:50%; background:currentColor; }
+  .chip.on, .chip.running { color:#3ddc84; border-color:var(--accent-dk); }
+  .chip.starting, .chip.backoff { color:#f5c451; border-color:#6b5414; }
+  .chip.fatal, .chip.exited, .chip.err { color:#e5484d; border-color:#7a1f1a; }
+  /* camera */
+  .card.feed-card { flex:1; display:flex; flex-direction:column; }
+  .feed { position:relative; flex:1; min-height:220px; background:#000; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .feed img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+  .feed .empty { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--muted); text-align:center; padding:20px; }
+  .feed .empty svg { width:48px; height:48px; fill:var(--line); }
+  .cam-bar { display:flex; flex-wrap:wrap; align-items:center; gap:14px 24px; margin-top:14px; }
+  .switch { display:inline-flex; align-items:center; gap:10px; margin:0; color:var(--text); font-size:.9rem; font-weight:600; cursor:pointer; }
+  .switch input { appearance:none; width:42px; height:24px; padding:0; border-radius:999px; background:var(--night); border:1px solid var(--line); position:relative; cursor:pointer; transition:background .15s; flex:none; }
+  .switch input::after { content:''; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:var(--muted); transition:transform .15s, background .15s; }
+  .switch input:checked { background:var(--accent-dk); border-color:var(--accent); }
+  .switch input:checked::after { transform:translateX(18px); background:var(--cream); }
+  .switch:has(input:disabled) { opacity:.4; cursor:not-allowed; }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-left:auto; }
+  .seg button { background:var(--night); color:var(--muted); border:none; padding:8px 14px; font-weight:600; font-size:.85rem; cursor:pointer; }
+  .seg button + button { border-left:1px solid var(--line); }
+  .seg button.active { background:var(--accent-dk); color:var(--text); }
+  /* settings */
+  .colours { display:flex; flex-wrap:wrap; gap:8px; }
+  .colours span { display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; background:var(--night); border:1px solid var(--line); font-size:.85rem; font-weight:600; text-transform:capitalize; }
+  .swatch { width:12px; height:12px; border-radius:50%; border:1px solid rgba(255,255,255,.25); }
+  .slider-row { display:flex; align-items:center; gap:14px; }
+  .slider-row output { min-width:72px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums; }
+  .actions { display:flex; align-items:center; gap:12px; margin-top:16px; }
+  .actions button.primary { margin:0; }
+  .svc { display:flex; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--line); }
+  .svc:first-child { border-top:none; padding-top:0; }
+  .svc .name { font-weight:600; min-width:110px; }
+  .svc .acts { margin-left:auto; display:flex; gap:6px; }
+  button.sm { padding:5px 12px; font-size:.8rem; margin:0; }
+  .toast { position:fixed; right:20px; bottom:44px; max-width:min(420px, calc(100vw - 40px)); padding:12px 16px; border-radius:8px; background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--accent); box-shadow:0 8px 24px rgba(0,0,0,.4); font-size:.9rem; opacity:0; transform:translateY(8px); transition:opacity .2s, transform .2s; pointer-events:none; }
+  .toast.show { opacity:1; transform:none; }
+  .toast.err { border-left-color:#e5484d; }
 </style>
 </head>
 <body>
@@ -56,7 +99,7 @@
 </nav>
 <main>
 
-<section id="controls" class="tab active">
+<section id="controls" class="tab fill active">
   <div class="card">
     <h2>Speed</h2>
     <input id="speed" type="range" min="0" max="100" value="50" oninput="document.getElementById('speed-v').textContent=this.value+'%'">
@@ -74,33 +117,54 @@
   </div>
 </section>
 
-<section id="camera" class="tab">
-  <div class="card">
-    <h2>Camera</h2>
-    <button class="ghost" onclick="post('/api/colordetect/motion/enable')">Start motion + detect</button>
-    <button class="ghost" onclick="post('/api/colordetect/motion/disable')">Stop</button>
+<section id="camera" class="tab fill">
+  <div class="card feed-card">
+    <div class="card-head">
+      <h2>Camera</h2>
+      <span><span class="chip" id="cam-chip">Off</span> <span class="chip" id="det-chip">Detection off</span></span>
+    </div>
+    <div class="feed">
+      <img id="cam-feed" alt="Camera feed" hidden>
+      <div class="empty" id="cam-empty">
+        <svg viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11z"/></svg>
+        <span id="cam-empty-msg">Camera is off</span>
+      </div>
+    </div>
+    <div class="cam-bar">
+      <label class="switch"><input type="checkbox" id="cam-power" onchange="setCamera(this.checked)">Camera</label>
+      <label class="switch"><input type="checkbox" id="cam-detect" onchange="setDetect(this.checked)" disabled>Colour detection</label>
+      <div class="seg" id="cam-view">
+        <button data-view="raw" class="active">Raw</button>
+        <button data-view="boxes" disabled>Detections</button>
+      </div>
+    </div>
   </div>
 </section>
 
 <section id="settings" class="tab">
   <div class="card">
     <h2>Connection</h2>
-    <label>API base URL</label>
+    <label for="api-base">API base URL</label>
     <input id="api-base" placeholder="http://10.42.0.97:8000">
-    <button class="primary" onclick="saveSettings()">Save</button>
+    <div class="actions"><button class="primary" onclick="saveSettings()">Save</button></div>
   </div>
   <div class="card">
-    <h2>Color detection</h2>
-    <button class="ghost" onclick="loadConfig()">Load current config</button>
-    <label>min_area</label><input id="cfg-min-area" type="number">
-    <label>jpeg_quality</label><input id="cfg-quality" type="number">
-    <label>resize_width</label><input id="cfg-resize" type="number">
-    <button class="primary" onclick="saveConfig()">Save config</button>
-    <pre id="cfg-out" style="color:var(--muted);margin-top:10px;white-space:pre-wrap"></pre>
+    <div class="card-head">
+      <h2>Colour detection</h2>
+      <span class="hint" id="cfg-msg">Resets when colordetect restarts</span>
+    </div>
+    <label for="cfg-min-area">Minimum object size</label>
+    <div class="slider-row">
+      <input id="cfg-min-area" type="range" min="100" max="5000" step="100" oninput="$('min-area-v').value = this.value + ' px'" onchange="saveMinArea(+this.value)">
+      <output id="min-area-v">–</output>
+    </div>
+    <div class="hint">Smaller blobs are ignored. Raise it if you get false detections.</div>
+    <label>Detecting</label>
+    <div class="colours" id="colours"></div>
   </div>
   <div class="card">
-    <h2>Services</h2>
-    <div id="service-buttons"></div>
+    <div class="card-head"><h2>Services</h2><span class="hint" id="svc-msg"></span></div>
+    <div id="service-rows"></div>
   </div>
 </section>
 
@@ -116,38 +180,46 @@
       <div class="stat"><div class="v" id="a-up">–</div><div class="k">Uptime</div></div>
     </div>
   </div>
-  <div class="card">
-    <h2>Programs</h2>
-    <pre id="a-programs" style="color:var(--muted);white-space:pre-wrap">–</pre>
-  </div>
 </section>
 
 </main>
+<div class="toast" id="toast"></div>
 <script>
 const $ = id => document.getElementById(id);
 let apiBase = localStorage.getItem('apiBase') || 'http://10.42.0.97:8000';
 $('api-base').value = apiBase;
+const activeTab = () => document.querySelector('.tab.active').id;
 
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
   document.querySelectorAll('nav button').forEach(x => x.classList.toggle('active', x === b));
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === b.dataset.tab));
+  if (b.dataset.tab === 'settings') loadConfig();
+  refreshCamera();
 });
+
+let toastTimer;
+function toast(msg, err) {
+  const t = $('toast');
+  t.textContent = msg; t.classList.toggle('err', !!err); t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), err ? 6000 : 2500);
+}
 
 function saveSettings() {
   apiBase = $('api-base').value.replace(/\/$/, '');
   localStorage.setItem('apiBase', apiBase);
-  setStatus('saved');
+  toast('Saved');
 }
-function setStatus(s) { console.log(s); }
 async function post(path, body) {
   try {
     const r = await fetch(apiBase + path, {method:'POST', headers:{'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : '{}'});
-    setStatus(path + ' -> ' + r.status);
-    return r.json();
-  } catch (e) { setStatus('error: ' + e.message); }
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) { toast(data.error || data.msg || data.output || `${path} failed (${r.status})`, true); return null; }
+    return data;
+  } catch (e) { toast('Rover unreachable: ' + e.message, true); return null; }
 }
 async function get(path) {
   const r = await fetch(apiBase + path);
+  if (!r.ok) throw new Error(path + ' -> ' + r.status);
   return r.json();
 }
 
@@ -155,21 +227,96 @@ function drive(dir) {
   const s = +$('speed').value;
   post('/api/pico/command', {cmd: dir + ' ' + s});
 }
-const SERVICES = ['colordetect','netconman','picocoms','motion','websockify','control-api'];
-$('service-buttons').innerHTML = SERVICES.map(s =>
-  `<button class="ghost" onclick="post('/api/services/${s}/start')">${s} start</button>
-   <button class="ghost" onclick="post('/api/services/${s}/stop')">${s} stop</button><br>`).join('');
 
+/* camera: motion = camera on, colordetect processing = detection on */
+const cam = {on:false, detect:false, view:'raw', msg:''};
+async function refreshCamera() {
+  try {
+    const s = await get('/api/colordetect/status');
+    cam.on = s.motion === 'running';
+    cam.detect = cam.on && !!s.processing;
+    cam.msg = cam.on || s.motion === 'stopped' ? '' : 'Camera state: ' + s.motion;
+  } catch (e) {
+    cam.on = cam.detect = false;
+    cam.msg = 'Colour detection service unreachable';
+  }
+  renderCamera();
+}
+function renderCamera() {
+  if (!cam.detect) cam.view = 'raw';
+  $('cam-power').checked = cam.on;
+  $('cam-detect').checked = cam.detect;
+  $('cam-detect').disabled = !cam.on;
+  $('cam-chip').textContent = cam.on ? 'Live' : 'Off';
+  $('cam-chip').className = 'chip' + (cam.on ? ' on' : cam.msg ? ' err' : '');
+  $('det-chip').textContent = cam.detect ? 'Detection on' : 'Detection off';
+  $('det-chip').className = 'chip' + (cam.detect ? ' on' : '');
+  document.querySelectorAll('#cam-view button').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === cam.view);
+    b.disabled = b.dataset.view === 'boxes' && !cam.detect;
+  });
+  const live = cam.on && activeTab() === 'camera';
+  const src = live ? apiBase + (cam.view === 'boxes' ? '/api/colordetect/video_feed' : '/api/camera/stream') : '';
+  const img = $('cam-feed');
+  if (img.dataset.src !== src) {
+    img.dataset.src = src;
+    if (src) img.src = src + '?t=' + Date.now(); else img.removeAttribute('src'); // drop the stream when hidden
+  }
+  img.hidden = !live;
+  $('cam-empty').hidden = live;
+  $('cam-empty-msg').textContent = cam.msg || 'Camera is off';
+}
+$('cam-feed').onerror = function () { // motion takes a moment to start streaming
+  setTimeout(() => { if (this.dataset.src) this.src = this.dataset.src + '?t=' + Date.now(); }, 1500);
+};
+document.querySelectorAll('#cam-view button').forEach(b => b.onclick = () => { cam.view = b.dataset.view; renderCamera(); });
+async function setCamera(on) {
+  $('cam-power').disabled = true;
+  if (on) await post('/api/services/motion/start');
+  else { await post('/api/colordetect/detect/disable'); await post('/api/services/motion/stop'); }
+  $('cam-power').disabled = false;
+  await refreshCamera();
+}
+async function setDetect(on) {
+  if (await post('/api/colordetect/detect/' + (on ? 'enable' : 'disable')) && on) cam.view = 'boxes';
+  await refreshCamera();
+}
+
+/* settings: colour detection config */
+const rgb = ([b, g, r]) => `rgb(${r},${g},${b})`; // colordetect stores OpenCV BGR
 async function loadConfig() {
-  const c = await get('/api/colordetect/config');
-  $('cfg-min-area').value = c.min_area; $('cfg-quality').value = c.jpeg_quality; $('cfg-resize').value = c.resize_width;
-  $('cfg-out').textContent = JSON.stringify(c.colours, null, 2);
+  let cfg;
+  try { cfg = await get('/api/colordetect/config'); }
+  catch (e) { $('cfg-msg').textContent = 'Could not load — is colordetect running?'; return; }
+  $('cfg-msg').textContent = 'Resets when colordetect restarts';
+  $('cfg-min-area').value = cfg.min_area; $('min-area-v').value = cfg.min_area + ' px';
+  $('colours').innerHTML = Object.entries(cfg.colours).map(([name, c]) =>
+    `<span><i class="swatch" style="background:${rgb(c.bgr)}"></i>${name}</span>`).join('');
 }
-async function saveConfig() {
-  await post('/api/colordetect/config', {min_area:+$('cfg-min-area').value, jpeg_quality:+$('cfg-quality').value, resize_width:+$('cfg-resize').value});
+async function saveMinArea(v) {
+  if (await post('/api/colordetect/config', {min_area: v})) toast('Minimum size set to ' + v + ' px');
+  else loadConfig();
 }
 
-async function pollAnalytics() {
+/* settings: services */
+const SERVICES = ['colordetect','netconman','picocoms','motion','websockify','control-api'];
+function renderServices(programs) {
+  $('service-rows').innerHTML = SERVICES.map(s => {
+    const state = (programs[s] || 'unknown').split(/\s+/)[0].toLowerCase();
+    const self = s === 'control-api'; // stopping it would cut off this page
+    return `<div class="svc"><span class="name">${s}</span><span class="chip ${state}">${state}</span><span class="acts">
+      <button class="ghost sm" onclick="svc('${s}','start')" ${state === 'running' ? 'disabled' : ''}>Start</button>
+      <button class="ghost sm" onclick="svc('${s}','stop')" ${state !== 'running' || self ? 'disabled' : ''}>Stop</button>
+      <button class="ghost sm" onclick="svc('${s}','restart')">Restart</button></span></div>`;
+  }).join('');
+}
+async function svc(name, action) {
+  if (await post(`/api/services/${name}/${action}`)) toast(`${name}: ${action} ok`);
+  poll();
+}
+renderServices({});
+
+async function poll() {
   try {
     const s = await get('/api/system');
     $('a-cpu').textContent = s.cpu_percent; $('a-temp').textContent = s.cpu_temp_c;
@@ -177,11 +324,12 @@ async function pollAnalytics() {
     $('a-wifi').textContent = s.wifi ? s.wifi.signal_percent : '–';
     $('a-up').textContent = Math.round(s.uptime_s/60) + 'm';
     const st = await get('/api/status');
-    $('a-programs').textContent = st.error ? 'supervisorctl failed: ' + st.error : Object.entries(st.programs).map(([k,v]) => k + ': ' + v).join('\n');
-    setStatus('connected');
-  } catch (e) { setStatus('disconnected'); }
+    $('svc-msg').textContent = st.error ? 'supervisorctl failed: ' + st.error : '';
+    renderServices(st.programs);
+  } catch (e) { $('svc-msg').textContent = 'Rover unreachable'; }
+  if (activeTab() === 'camera') refreshCamera();
 }
-setInterval(pollAnalytics, 3000); pollAnalytics();
+setInterval(poll, 3000); poll();
 </script>
 </body>
 </html>

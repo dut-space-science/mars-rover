@@ -45,10 +45,21 @@ server {
 
 	server_name _;
 
+	# Rover control center UI (copied here by install.sh)
 	location / {
-		# First attempt to serve request as file, then
-		# as directory, then fall back to displaying a 404.
 		try_files $uri $uri/ =404;
+		add_header Cache-Control "no-cache";
+	}
+
+	# Control API (control_api.py)
+	location /api/ {
+		proxy_pass http://127.0.0.1:8000;
+		proxy_http_version 1.1;
+		proxy_set_header Host $host;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		# camera feeds are endless MJPEG streams: don't buffer or time them out
+		proxy_buffering off;
+		proxy_read_timeout 1h;
 	}
 
 	# pass PHP scripts to FastCGI server

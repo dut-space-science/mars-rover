@@ -20,6 +20,7 @@ $SUDO rm -f /etc/supervisor/conf.d/colordetect.conf \
 
 echo "==> Removing nginx site"
 $SUDO rm -f /etc/nginx/sites-enabled/default /etc/nginx/sites-available/default
+$SUDO rm -f /var/www/html/index.html
 $SUDO systemctl restart nginx || true
 
 echo "==> Done. To also remove packages: sudo apt-get purge supervisor nginx motion"

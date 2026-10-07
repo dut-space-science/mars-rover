@@ -38,6 +38,7 @@ echo "==> Installing nginx config"
 $SUDO cp "$PROJECT_DIR/nginx/nginx.conf" /etc/nginx/nginx.conf
 $SUDO cp "$PROJECT_DIR/nginx/default" /etc/nginx/sites-available/default
 $SUDO ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+$SUDO install -m 644 "$PROJECT_DIR/../ui/index.html" /var/www/html/index.html
 $SUDO nginx -t
 
 echo "==> Enabling and starting services"

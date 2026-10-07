@@ -186,7 +186,9 @@
 <div class="toast" id="toast"></div>
 <script>
 const $ = id => document.getElementById(id);
-let apiBase = localStorage.getItem('apiBase') || 'http://10.42.0.97:8000';
+// Served by nginx on the Pi: same origin (nginx proxies /api). Opened as a file: talk to the Pi directly.
+const DEFAULT_API = location.protocol.startsWith('http') ? location.origin : 'http://10.42.0.97:8000';
+let apiBase = localStorage.getItem('apiBase') || DEFAULT_API;
 $('api-base').value = apiBase;
 const activeTab = () => document.querySelector('.tab.active').id;
 
@@ -205,8 +207,9 @@ function toast(msg, err) {
 }
 
 function saveSettings() {
-  apiBase = $('api-base').value.replace(/\/$/, '');
-  localStorage.setItem('apiBase', apiBase);
+  apiBase = $('api-base').value.trim().replace(/\/$/, '');
+  if (apiBase) localStorage.setItem('apiBase', apiBase);
+  else { localStorage.removeItem('apiBase'); apiBase = DEFAULT_API; $('api-base').value = apiBase; }
   toast('Saved');
 }
 async function post(path, body) {
@@ -276,7 +279,9 @@ $('cam-feed').onerror = async function () {
   const ctl = new AbortController();
   try {
     const r = await fetch(src, {signal: ctl.signal});
-    cam.feedErr = r.ok ? 'Waiting for video…' : 'No video: ' + ((await r.json().catch(() => ({}))).error || 'HTTP ' + r.status);
+    cam.feedErr = r.ok ? 'Waiting for video…'
+      : r.status === 404 ? 'No video: the API has no camera stream route — restart control-api on the latest code'
+      : 'No video: ' + ((await r.json().catch(() => ({}))).error || 'HTTP ' + r.status);
   } catch (e) { cam.feedErr = 'No video: stream unreachable'; }
   ctl.abort();
   renderCamera();

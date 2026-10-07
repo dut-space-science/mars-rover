@@ -185,9 +185,9 @@ class Handler(BaseHTTPRequestHandler):
 <h2>colordetect :9003</h2>
 <p>motion: <b>{st}</b> | processing: <b>{'on' if en else 'off'}</b> | frame: {'yes' if has else 'no'}</p>
 <p>
-<button onclick="fetch('/motion/enable',{method:'POST'}).then(r=>r.json()).then(j=>alert(JSON.stringify(j)))">Enable motion + start</button>
-<button onclick="fetch('/motion/disable',{method:'POST'}).then(r=>r.json()).then(j=>alert(JSON.stringify(j)))">Disable motion + stop</button>
-<button onclick="fetch('/motion/toggle',{method:'POST'}).then(r=>r.json()).then(j=>alert(JSON.stringify(j)))">Toggle</button>
+<button onclick="fetch('/motion/enable',{{method:'POST'}}).then(r=>r.json()).then(j=>alert(JSON.stringify(j)))">Enable motion + start</button>
+<button onclick="fetch('/motion/disable',{{method:'POST'}}).then(r=>r.json()).then(j=>alert(JSON.stringify(j)))">Disable motion + stop</button>
+<button onclick="fetch('/motion/toggle',{{method:'POST'}}).then(r=>r.json()).then(j=>alert(JSON.stringify(j)))">Toggle</button>
 </p>
 <p><a href="/video_feed" target="_blank">/video_feed (MJPEG)</a> | <a href="/snapshot" target="_blank">/snapshot</a> | <a href="/config">/config</a> | <a href="/ping">/ping</a></p>
 <img src="/video_feed" style="width:100%;max-width:640px;border:1px solid #ccc" />

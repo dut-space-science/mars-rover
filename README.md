@@ -63,7 +63,7 @@ System packages remain; purge with `sudo apt-get purge supervisor nginx motion`.
 
 ## Control API (`control_api.py`, port 8000)
 
-Flask + CORS wrapper for a web control center. `control-api` runs under
+Flask + flask-smorest (OpenAPI 3) + CORS wrapper for a web control center. `control-api` runs under
 supervisor like the other programs.
 
 | Endpoint | Method | Description |

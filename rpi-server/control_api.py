@@ -3,16 +3,28 @@ import subprocess
 import requests
 from flask import Flask, Response, jsonify, request
 from flask_cors import CORS
+from flask_smorest import Api, Blueprint
+from marshmallow import Schema, fields
 
 COLORDETECT = "http://localhost:9003"
 PICOCOMS = "http://localhost:8080"
 PORT = 8000
 
-SERVICES = ["colordetect", "netconman", "picocoms", "motion", "websockify"]
+SERVICES = ["colordetect", "netconman", "picocoms", "motion", "websockify", "control-api"]
 ACTIONS = ["start", "stop", "restart"]
 
 app = Flask(__name__)
+app.config.update(
+    API_TITLE="Mars Rover Control API",
+    API_VERSION="v1",
+    OPENAPI_VERSION="3.0.3",
+    OPENAPI_URL_PREFIX="/api/docs",
+    OPENAPI_SWAGGER_UI_PATH="/",
+    OPENAPI_SWAGGER_UI_URL="https://cdn.jsdelivr.net/npm/swagger-ui-dist/",
+)
 CORS(app)
+api = Api(app)
+blp = Blueprint("control", __name__, description="Rover control center endpoints", url_prefix="/api")
 
 
 def run(cmd, timeout=10):
@@ -29,12 +41,37 @@ def proxy_json(url, method="GET", body=None, timeout=10):
             r = requests.post(url, json=body or {}, timeout=timeout)
         else:
             r = requests.get(url, timeout=timeout)
-        return (r.content, r.status_code, r.headers.get("Content-Type", "application/json"))
+        return r.content, r.status_code, r.headers.get("Content-Type", "application/json")
     except requests.RequestException as e:
-        return jsonify({"error": str(e)})[0].data, 502, "application/json"
+        return Response(jsonify({"error": str(e)}).data, status=502, mimetype="application/json")[0].data, 502, "application/json"
 
 
-@app.get("/api/status")
+class StatusResponse(Schema):
+    programs = fields.Dict(keys=fields.Str(), values=fields.Str())
+    active_connections = fields.List(fields.Str())
+
+
+class ServiceActionResponse(Schema):
+    ok = fields.Bool()
+    output = fields.Str()
+
+
+class ColordetectConfigQuery(Schema):
+    pass
+
+
+class PicoCommandBody(Schema):
+    cmd = fields.Str(required=True, metadata={"description": "Command to send to the Pico", "example": "PING"})
+    timeout = fields.Int(load_default=2, metadata={"description": "Seconds to wait for the response"})
+
+
+class ErrorResponse(Schema):
+    error = fields.Str()
+
+
+@blp.route("/status", methods=["GET"])
+@blp.response(200, StatusResponse)
+@blp.doc(summary="Supervisor program states and active wifi connections")
 def status():
     _, out, _ = run(["sudo", "supervisorctl", "status"])
     programs = {}
@@ -43,36 +80,43 @@ def status():
         if len(parts) == 2:
             programs[parts[0]] = parts[1].strip()
     _, wifi_ssid, _ = run(["nmcli", "-t", "-f", "NAME", "con", "show", "--active"])
-    return jsonify({"programs": programs, "active_connections": wifi_ssid.splitlines()})
+    return {"programs": programs, "active_connections": wifi_ssid.splitlines()}
 
 
-@app.post("/api/services/<name>/<action>")
+@blp.route("/services/<string:name>/<string:action>", methods=["POST"])
+@blp.response(200, ServiceActionResponse)
+@blp.doc(summary="Start, stop, or restart a supervisor program. name: one of " + ", ".join(SERVICES) + ". action: start|stop|restart")
 def service_action(name, action):
     if name not in SERVICES or action not in ACTIONS:
         return jsonify({"error": "unknown service or action"}), 400
     rc, out, err = run(["sudo", "supervisorctl", action, name], timeout=30)
-    return jsonify({"ok": rc == 0, "output": out or err}), 200 if rc == 0 else 500
+    return {"ok": rc == 0, "output": out or err}, 200 if rc == 0 else 500
 
 
-@app.get("/api/colordetect/status")
+@blp.route("/colordetect/status", methods=["GET"])
+@blp.doc(summary="Color detection health, processing state, motion state")
 def colordetect_status():
     content, code, ctype = proxy_json(f"{COLORDETECT}/health")
     return Response(content, status=code, mimetype=ctype)
 
 
-@app.get("/api/colordetect/config")
+@blp.route("/colordetect/config", methods=["GET"])
+@blp.doc(summary="Get HSV thresholds, min_area, jpeg_quality, resize_width")
 def colordetect_config_get():
     content, code, ctype = proxy_json(f"{COLORDETECT}/config")
     return Response(content, status=code, mimetype=ctype)
 
 
-@app.post("/api/colordetect/config")
+@blp.route("/colordetect/config", methods=["POST"])
+@blp.doc(summary="Update color detection config",
+         description="Accepts keys: colours (per-color HSV ranges + bgr), min_area, jpeg_quality, resize_width")
 def colordetect_config_post():
     content, code, ctype = proxy_json(f"{COLORDETECT}/config", "POST", request.get_json(force=True))
     return Response(content, status=code, mimetype=ctype)
 
 
-@app.post("/api/colordetect/motion/<action>")
+@blp.route("/colordetect/motion/<string:action>", methods=["POST"])
+@blp.doc(summary="Enable, disable, or toggle motion + detection. action: enable|disable|toggle")
 def colordetect_motion(action):
     if action in ("enable", "start"):
         path = "/motion/enable"
@@ -86,7 +130,8 @@ def colordetect_motion(action):
     return Response(content, status=code, mimetype=ctype)
 
 
-@app.get("/api/colordetect/snapshot")
+@blp.route("/colordetect/snapshot", methods=["GET"])
+@blp.doc(summary="Latest processed JPEG frame")
 def colordetect_snapshot():
     try:
         r = requests.get(f"{COLORDETECT}/snapshot", timeout=10)
@@ -95,7 +140,8 @@ def colordetect_snapshot():
         return jsonify({"error": str(e)}), 502
 
 
-@app.get("/api/colordetect/video_feed")
+@blp.route("/colordetect/video_feed", methods=["GET"])
+@blp.doc(summary="MJPEG video stream of processed frames")
 def colordetect_video_feed():
     def generate():
         with requests.get(f"{COLORDETECT}/video_feed", stream=True, timeout=10) as r:
@@ -105,22 +151,24 @@ def colordetect_video_feed():
     return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
-@app.post("/api/pico/command")
-def pico_command():
-    body = request.get_json(force=True) or {}
-    cmd = body.get("cmd", "")
-    timeout = body.get("timeout", 2)
-    if not cmd:
-        return jsonify({"error": "cmd required"}), 400
+@blp.route("/pico/command", methods=["POST"])
+@blp.arguments(PicoCommandBody)
+@blp.doc(summary="Send a command to the Pico over serial (PING, LED_ON, LED_OFF, HELLO)")
+def pico_command(body):
+    cmd = body["cmd"]
+    timeout = body["timeout"]
     content, code, ctype = proxy_json(f"{PICOCOMS}/", "POST", {"cmd": cmd, "timeout": timeout}, timeout=timeout + 5)
     return Response(content, status=code, mimetype=ctype)
 
 
-@app.get("/api/wifi/status")
+@blp.route("/wifi/status", methods=["GET"])
+@blp.doc(summary="nmcli device states")
 def wifi_status():
     rc, out, err = run(["nmcli", "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "dev", "status"])
-    return jsonify({"ok": rc == 0, "devices": out, "error": err if rc else None})
+    return {"ok": rc == 0, "devices": out, "error": err if rc else None}
 
+
+api.register_blueprint(blp)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=PORT, threaded=True)
